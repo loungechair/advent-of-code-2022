@@ -1,32 +1,32 @@
+import heapq
+
 FILE = 'input.txt'
 
 
-def find_elf_with_most(filename):
+def totals_generator(filename):
     with open(filename) as f:
-        highest = 0
         total = 0
         for line in f.readlines():
             line = line.strip()
             if len(line) == 0:
-                highest = max(highest, total)
+                yield total
                 total = 0
             else:
                 total += int(line)
-        print(f"Highest: {highest}")
+
+
+def find_elf_with_most(filename):
+    highest = 0
+    for total in totals_generator(filename):
+        highest = max(highest, total)
+    print(f"Highest: {highest}")
 
 
 def find_top_3_with_most(filename):
     all_totals = []
-    with open(filename) as f:
-        total = 0
-        for line in f.readlines():
-            line = line.strip()
-            if len(line) == 0:
-                all_totals.append(total)
-                total = 0
-            else:
-                total += int(line)
-    top3 = sum(sorted(all_totals)[-3:])
+    for total in totals_generator(filename):
+        heapq.heappush(all_totals, total)
+    top3 = sum(heapq.nlargest(3, all_totals))
     print(f"Top 3 total: {top3}")
 
 
