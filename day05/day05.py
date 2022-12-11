@@ -1,11 +1,13 @@
+import abc
 import copy
 import re
-
 from dataclasses import dataclass
 from itertools import islice
+from typing import Dict, List, Tuple
 
 FILE = "input.txt"
 
+State = Dict[int, List[str]]
 
 @dataclass
 class MoveInstruction:
@@ -20,9 +22,8 @@ class MoveInstruction:
         return MoveInstruction(s, t, c)
 
 
-def load_input(filename):
+def load_input(filename: str) -> Tuple[State, List[MoveInstruction]]:
     initial_state = {i: [] for i in range(1, 10)}
-    instructions = []
 
     with open(filename) as f:
         head = list(islice(f, 8))
@@ -38,37 +39,39 @@ def load_input(filename):
 
     return initial_state, instructions
 
+class Simulation(abc.ABC):
+    def __init__(self, initial_state: State) -> None:
+        self.state: State = copy.deepcopy(initial_state)
 
-class FirstSimulation:
-    def __init__(self, initial_state):
-        self.state = copy.deepcopy(initial_state)
+    @abc.abstractmethod
+    def _process_instruction(self, inst: MoveInstruction) -> None:
+        pass
 
-    def _process_instruction(self, instruction):
-        for i in range(instruction.count):
-            self.state[instruction.target].append(self.state[instruction.source].pop())
-
-    def run(self, instructions):
+    def run(self, instructions: List[MoveInstruction]) -> None:
         for inst in instructions:
             self._process_instruction(inst)
 
-    def get_state(self):
+    def get_state(self) -> str:
         return ''.join([crates[-1] for _, crates in self.state.items()])
 
 
-class SecondSimulation:
-    def __init__(self, initial_state):
-        self.state = copy.deepcopy(initial_state)
+class FirstSimulation(Simulation):
+    def __init__(self, initial_state: State) -> None:
+        super().__init__(initial_state)
 
-    def _process_instruction(self, inst):
+    def _process_instruction(self, inst: MoveInstruction) -> None:
+        for i in range(inst.count):
+            self.state[inst.target].append(self.state[inst.source].pop())
+
+
+class SecondSimulation(Simulation):
+    def __init__(self, initial_state: State) -> None:
+        super().__init__(initial_state)
+
+    def _process_instruction(self, inst: MoveInstruction):
         self.state[inst.target].extend(self.state[inst.source][-inst.count:])
         self.state[inst.source] = self.state[inst.source][:-inst.count]
 
-    def run(self, instructions):
-        for inst in instructions:
-            self._process_instruction(inst)
-
-    def get_state(self):
-        return ''.join([crates[-1] for _, crates in self.state.items()])
 
 if __name__ == '__main__':
     state, instructions = load_input(FILE)
