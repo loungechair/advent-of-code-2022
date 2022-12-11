@@ -1,3 +1,5 @@
+from typing import Generator, Tuple, Set
+
 FILE = "input.txt"
 
 def calculate_priority(letter: str) -> int:
@@ -7,7 +9,7 @@ def calculate_priority(letter: str) -> int:
         return 27 + ord(letter) - ord('A')
 
 
-def find_total_priority(filename):
+def find_total_priority(filename: str) -> int:
     total_priority = 0
     with open(filename) as f:
         for line in f:
@@ -20,24 +22,22 @@ def find_total_priority(filename):
     return total_priority
 
 
-def group_generator(filename):
+def group_generator(filename: str) -> Generator[Tuple[Set[str]], None, None]:
     group = []
     with open(filename) as f:
         for line in f:
             group.append(line.rstrip())
             if len(group) == 3:
-                yield group
+                yield [set(x) for x in group]
                 group = []
 
 
-def find_group_priorities(filename):
+def find_group_priorities(filename: str) -> int:
     total_priority = 0
-    for group in group_generator(filename):
-        a, b, c = [set(x) for x in group]
-        intersect = a.intersection(b).intersection(c)
-        badge = list(intersect)[0]
+    for a, b, c in group_generator(filename):
+        (badge, ) = a.intersection(b).intersection(c)
         priority = calculate_priority(badge)
-        total_priority += priority
+        total_priority += calculate_priority(badge)
     return total_priority
 
 
